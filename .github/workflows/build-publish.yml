@@ -41,4 +41,4 @@ jobs:
           docker tag "$IMAGE_NAME" "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
           docker push "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
         env:
-          VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${steps.extract_branch.outputs.short_sha}-run-${github.run_number}
+          VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${{ steps.extract_branch.outputs.short_sha }}-run-${{ github.run_number }}
