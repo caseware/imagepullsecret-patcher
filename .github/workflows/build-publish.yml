@@ -1,0 +1,44 @@
+# partly from https://docs.github.com/en/actions/publishing-packages/publishing-docker-images#publishing-images-to-github-packages
+name: Create and publish a Docker image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['master']
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}  # The owner and repository name. For example, caseware/imagepullsecret-patcher
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Extract branch name
+        shell: bash
+        run: |
+          echo ""::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+          echo ""::set-output name=short_sha::$(git rev-parse --short HEAD)"
+        id: extract_branch
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push to Docker registry
+        run: |
+          docker build . -t "$IMAGE_NAME"
+          docker tag "$IMAGE_NAME" "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          docker push "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+        env:
+          VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${steps.extract_branch.outputs.short_sha}-run-${github.run_number}
