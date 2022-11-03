@@ -26,7 +26,7 @@ jobs:
           # Enable tracing build for Golang, to leverage the existing build process
           CODEQL_EXTRACTOR_GO_BUILD_TRACING: 'on'
         with:
-          languages: csharp, cpp
+          languages: go
           trap-caching: true
 
       - name: Build
