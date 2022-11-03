@@ -42,3 +42,29 @@ jobs:
           docker push "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
         env:
           VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${{ steps.extract_branch.outputs.short_sha }}-run-${{ github.run_number }}
+  codeql-build-analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        # Override language selection by uncommenting this and choosing your languages
+        env:
+          # Enable tracing build for Golang, to leverage the existing build process
+          CODEQL_EXTRACTOR_GO_BUILD_TRACING: 'on'
+        with:
+          languages: csharp, cpp
+          trap-caching: true
+
+      - name: Build
+        run: |
+          go mod download
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
+        shell: bash
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
