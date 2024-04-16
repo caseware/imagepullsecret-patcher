@@ -1,13 +1,14 @@
 # partly from https://docs.github.com/en/actions/publishing-packages/publishing-docker-images#publishing-images-to-github-packages
 name: Create and publish a Docker image
 
+permissions: write-all
 on:
   workflow_dispatch:
   push:
     branches: ['master']
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: 007640530078.dkr.ecr.us-east-1.amazonaws.com
   IMAGE_NAME: ${{ github.repository }}  # The owner and repository name. For example, caseware/imagepullsecret-patcher
 
 jobs:
@@ -28,12 +29,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      - name: (UST1) Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        id: configure-aws-credentials
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          role-to-assume: ${{ vars.AWS_ROLE_TEST }}
+          role-session-name: publish-imagepullsecret-patcher
+          aws-region: us-east-1
+
+      - name: AWS ECR Login
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: '${{ steps.configure-aws-credentials.outputs.aws-account-id }}'
 
       - name: Build and push to Docker registry
         run: |
