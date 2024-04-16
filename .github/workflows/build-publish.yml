@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: 007640530078.dkr.ecr.us-east-1.amazonaws.com
-  IMAGE_NAME: ${{ github.repository }}  # The owner and repository name. For example, caseware/imagepullsecret-patcher
+  IMAGE_NAME: imagepullsecret-patcher/imagepullsecret-patcher  # Must begin with `${repoName}/`
 
 jobs:
   build-and-push-image:
