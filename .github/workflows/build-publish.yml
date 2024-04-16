@@ -4,11 +4,16 @@ name: Create and publish a Docker image
 permissions: write-all
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        description: 'The environment to deploy to'
+        required: true
+        default: 'test'
   push:
     branches: ['master']
 
 env:
-  REGISTRY: 007640530078.dkr.ecr.us-east-1.amazonaws.com
   IMAGE_NAME: imagepullsecret-patcher/imagepullsecret-patcher  # Must begin with `${repoName}/`
 
 jobs:
@@ -33,7 +38,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         id: configure-aws-credentials
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_TEST }}
+          role-to-assume: ${{ vars.AWS_ROLE }}
           role-session-name: publish-imagepullsecret-patcher
           aws-region: us-east-1
 
@@ -44,8 +49,10 @@ jobs:
 
       - name: Build and push to Docker registry
         run: |
-          docker build . -t "$IMAGE_NAME"
-          docker tag "$IMAGE_NAME" "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
-          docker push "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          image="${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          docker build . -t "$image"
+          aws ecr create-repository --repository-name "${IMAGE_NAME}" --image-tag-mutability IMMUTABLE || true
+          docker push "$image"
         env:
+          REGISTRY: ${{ vars.REGISTRY }}
           VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${{ steps.extract_branch.outputs.short_sha }}-run-${{ github.run_number }}
