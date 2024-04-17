@@ -1,14 +1,20 @@
 # partly from https://docs.github.com/en/actions/publishing-packages/publishing-docker-images#publishing-images-to-github-packages
 name: Create and publish a Docker image
 
+permissions: write-all
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        description: 'The environment to deploy to'
+        required: true
+        default: 'test'
   push:
     branches: ['master']
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}  # The owner and repository name. For example, caseware/imagepullsecret-patcher
+  IMAGE_NAME: imagepullsecret-patcher/imagepullsecret-patcher  # Must begin with `${repoName}/`
 
 jobs:
   build-and-push-image:
@@ -28,17 +34,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      - name: (UST1) Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        id: configure-aws-credentials
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          role-to-assume: ${{ vars.AWS_ROLE }}
+          role-session-name: publish-imagepullsecret-patcher
+          aws-region: us-east-1
+
+      - name: AWS ECR Login
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: '${{ steps.configure-aws-credentials.outputs.aws-account-id }}'
 
       - name: Build and push to Docker registry
         run: |
-          docker build . -t "$IMAGE_NAME"
-          docker tag "$IMAGE_NAME" "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
-          docker push "${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          image="${REGISTRY}/${IMAGE_NAME}:${VERSION}"
+          docker build . -t "$image"
+          aws ecr create-repository --repository-name "${IMAGE_NAME}" --image-tag-mutability IMMUTABLE || true
+          docker push "$image"
         env:
+          REGISTRY: ${{ vars.REGISTRY }}
           VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${{ steps.extract_branch.outputs.short_sha }}-run-${{ github.run_number }}
