@@ -22,6 +22,7 @@ env:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     steps:
       - name: Extract branch name
         shell: bash
