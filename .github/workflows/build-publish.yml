@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: (UST1) Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         id: configure-aws-credentials
         with:
           role-to-assume: ${{ vars.AWS_ROLE }}
