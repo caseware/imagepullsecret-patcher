@@ -1,7 +1,10 @@
 # partly from https://docs.github.com/en/actions/publishing-packages/publishing-docker-images#publishing-images-to-github-packages
 name: Create and publish a Docker image
 
-permissions: write-all
+permissions:
+  id-token: write # This is required for OIDC
+  contents: read  # This is required for actions/checkout
+
 on:
   workflow_dispatch:
     inputs:
