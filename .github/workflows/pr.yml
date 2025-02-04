@@ -32,7 +32,10 @@ jobs:
       - name: Build
         run: |
           go mod download
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
+          arch=$(arch)
+          [ "$arch" = "amd64" ] && export GOARCH="amd64"
+          [ "$arch" = "aarch64" ] && export GOARCH="arm64"
+          CGO_ENABLED=0 GOOS=linux go build
         shell: bash
 
       - name: Perform CodeQL Analysis
