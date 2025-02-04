@@ -13,8 +13,8 @@ RUN go mod download
 COPY . .
 
 RUN arch=$(arch) && \
-    [ "$arch" = "amd64" ] && export GOARCH="amd64" && \
-    [ "$arch" = "aarch64" ] && export GOARCH="arm64" && \
+    [ "$arch" = "amd64" ] && export GOARCH="amd64" || true && \
+    [ "$arch" = "aarch64" ] && export GOARCH="arm64" || true && \
     CGO_ENABLED=0 GOOS=linux go build
 
 # final stage
