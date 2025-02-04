@@ -67,14 +67,3 @@ jobs:
         env:
           REGISTRY: ${{ vars.REGISTRY }}
           VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${{ steps.extract_branch.outputs.short_sha }}-run-${{ github.run_number }}
-
-      - name: Create and push multi-arch manifest
-        run: |
-          image="${REGISTRY}/${IMAGE_NAME}:${VERSION}"
-          docker manifest create "$image" \
-            --amend "${REGISTRY}/${IMAGE_NAME}:${VERSION}-amd64" \
-            --amend "${REGISTRY}/${IMAGE_NAME}:${VERSION}-arm64"
-          docker manifest push "$image"
-        env:
-          REGISTRY: ${{ vars.REGISTRY }}
-          VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${{ steps.extract_branch.outputs.short_sha }}-run-${{ github.run_number }}
