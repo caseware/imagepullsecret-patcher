@@ -47,12 +47,23 @@ jobs:
         with:
           registries: '${{ steps.configure-aws-credentials.outputs.aws-account-id }}'
 
-      - name: Build and push to Docker registry
+      - name: Create ECR repository
+        run: |
+          aws ecr create-repository --repository-name "${IMAGE_NAME}" --image-tag-mutability IMMUTABLE || true
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push multi-arch image
         run: |
           image="${REGISTRY}/${IMAGE_NAME}:${VERSION}"
-          docker build . -t "$image"
-          aws ecr create-repository --repository-name "${IMAGE_NAME}" --image-tag-mutability IMMUTABLE || true
-          docker push "$image"
+          docker buildx create --use
+          docker buildx build --platform linux/amd64,linux/arm64 . -t "$image" --push
         env:
           REGISTRY: ${{ vars.REGISTRY }}
           VERSION: ${{ steps.extract_branch.outputs.branch }}-sha-${{ steps.extract_branch.outputs.short_sha }}-run-${{ github.run_number }}
